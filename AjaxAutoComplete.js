@@ -1,10 +1,12 @@
-;(function (xhrAuto, $, un) {
-    xhrAuto.ajaxAutocomplete = function (context, options) {
+;(function ($, un) {
+    //$ = jQuery shortcut to avoid library conflict
+    //un = undefined to avoid undefined redifinition
+    ajaxAutocomplete = function (context, options) {
         var self = this,
         timeOut = null,
-        contextElement = $(context),
         searchElement = null,
         resultsElement = null,
+        currentOptions = {},
         execBlur = true,
         xhrRequest = null,
         currentSelect = -1,
@@ -44,13 +46,13 @@
          };
         
          self.highlightTerm = function (value, term) {
-    		return value.replace(new RegExp(["(?![^&;]+;)(?!<[^<>]*)(",
+        	return value.replace(new RegExp(["(?![^&;]+;)(?!<[^<>]*)(",
                    term.replace(/([\^\$\(\)\[\]\{\}\*\.\+\?\|\\])/gi, "\\$1"),
                    ")(?![^<>]*>)(?![^&;]+;)"].join(''), "gi"), "<strong>$1</strong>");
     	 }
         
          //Private methods
-         autocomplete = function (inputValue) {
+         function autocomplete(inputValue) {
             if (inputValue == '') {
                 return;
             }
@@ -61,20 +63,22 @@
             
             $.get(currentOptions.ajaxURL, { term : inputValue }, function (data) {
                 currentOptions.requestCallback(data);
-                resultsElementChildren = $('> li', resultsElement).size();
             }, (currentOptions.returnJSON) ? 'json' : '');
+
+            currentSelect = 0;
          };
         
-         selectOption = function () {
+         function selectOption() {
             execBlur = true;
             searchElement.val($('li.current a', resultsElement).attr('rel')).blur();
             self.clearAutocomplete();
          };
         
-         optionNavigation = function (upArrow) {
+         function optionNavigation(upArrow) {
             upArrow = upArrow || false;
             execBlur = false;
-            
+            resultsElementChildren = $('li', resultsElement).length;
+
             if (upArrow) {
                 currentSelect = (currentSelect == 0) ? resultsElementChildren - 1 : --currentSelect;
             } else {
@@ -89,17 +93,17 @@
                 .end();
          };
         
-         bindEvents = function () {
+         function bindEvents() {
             searchElement.keydown(function (ev) {
                 var that = $(this),
                     keyCode = ev.keyCode || window.event.keyCode;
-                    
+              
                 if (keyCode == keyCodes.ENTER) { //Enter
                     selectOption();
                 } else if (keyCode == keyCodes.ESCAPE) { //Escape
                     self.clearAutocomplete(); 
                 } else if (keyCode == keyCodes.UP || keyCode == keyCodes.DOWN) { //Up and down arrows
-                    $.proxy(optionNavigation((keyCode == keyCodes.UP) ? true : false), that);
+                    optionNavigation.call(self, keyCode == keyCodes.UP ? true : false);
                     currentOptions.upDownArrowsCallback.call(self, keyCode);
                 } else if ((keyCode >= keyCodes.LETTERS_NUMBERS_MIN && keyCode <= keyCodes.LETTERS_NUMBERS_MAX) 
                   || (keyCode >= keyCodes.NUM_PAD_MIN && keyCode <= keyCodes.NUM_PAD_MAX) 
@@ -108,7 +112,7 @@
                   || keyCode == keyCodes.BACKSPACE 
                   || keyCode == keyCodes.DELETE) { //Only numbers, letters, hyphen, back slash, forward slash, backspace, delete
                     timeOut = setTimeout(function () { 
-                        autocomplete(that.val()) 
+                        autocomplete(that.val());
                     }, currentOptions.searchDelay);
                 } else {
                     self.clearAutocomplete();
@@ -145,10 +149,10 @@
             } 
          };
         
-         init = function () {
+         function init() {
             currentOptions = $.extend({}, defaultOptions, options);
-            searchElement = $(currentOptions.searchElement, contextElement);
-            resultsElement = $('ul.ajaxAuto', contextElement); 
+            searchElement = $(currentOptions.searchElement, context).attr('autocomplete', 'off');
+            resultsElement = $('.ajaxAuto', context);
             bindEvents();
          };
         
@@ -156,17 +160,9 @@
          init();
     };
     
-    $.fn.ajaxAutocomplete = function (options) {    
+    $.fn.ajaxAutocomplete = function (options) {   
         return this.each(function () {
-            var that = $(this);
-            
-            if (that.data('ajaxAutocomplete')) {
-                that.data('ajaxAutocomplete');
-            } else { 
-               var autoCompleteObj = new xhrAuto.ajaxAutocomplete(this, options);
-               that.data('ajaxAutocomplete', autoCompleteObj);
-            }
+            new ajaxAutocomplete(this, options);
         });
     };
-    
-})(window.jqAutocomplete = window.jqAutocomplete || {}, jQuery, undefined);
+})(jQuery, undefined);
