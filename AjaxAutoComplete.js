@@ -74,8 +74,10 @@
         
          function selectOption() {
             execBlur = true;
-            var selected = resultsElement.find('li.current');
-            searchElement.val(currentOptions.formatResult($.data(selected[0], 'ajax-autocomplete'))).blur();
+            var selected = resultsElement.find('li.current'), 
+                selectedData = $.data(selected[0], 'ajax-autocomplete');
+            searchElement.val(currentOptions.formatResult(selectedData)).blur();
+            onSelectionCallback(selectedData);
             self.clearAutocomplete();
          };
         
