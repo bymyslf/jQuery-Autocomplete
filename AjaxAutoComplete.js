@@ -151,7 +151,7 @@
          function init() {
             currentOptions = $.extend({}, defaultOptions, options);
             searchElement = $(currentOptions.searchElement, context).attr('autocomplete', 'off');
-            resultsElement = $('.ajaxAuto', context);
+            resultsElement = $('.ajax-autocomplete-results', context);
             bindEvents();
          };
         
