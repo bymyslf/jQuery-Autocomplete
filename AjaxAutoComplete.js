@@ -16,7 +16,6 @@
             returnJSON : true,
             searchDelay : 100,
             searchElement : '',
-            highlight : true,
             requestCallback : function (data) {},
             upDownArrowsCallback : function (key) {},
             onFocusCallback : function (element) {},
