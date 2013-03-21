@@ -13,10 +13,14 @@
         resultsElementChildren = 0, 
         defaultOptions = {
             ajaxURL : '',
+            limit : 10,
             returnJSON : true,
             searchDelay : 100,
             searchElement : '',
+            formatItem : function (data) { return data; }, // Provides advanced markup for an item. For each row of results, this function will be called
+            formatResult : function (data) { return data; }, // Provides the formatting for the value to be put into the input field
             requestCallback : function (data) {},
+            onSelectionCallback : function (data) {},
             upDownArrowsCallback : function (key) {},
             onFocusCallback : function (element) {},
             onBlurCallback : function (element) {}
@@ -60,7 +64,8 @@
                 xhrRequest.abort();  
             }
             
-            $.get(currentOptions.ajaxURL, { term : inputValue }, function (data) {
+            xhrRequest = $.get(currentOptions.ajaxURL, { term : inputValue, limit: currentOptions.limit }, function (data) {
+                fillList(inputValue, data);
                 currentOptions.requestCallback(data);
             }, (currentOptions.returnJSON) ? 'json' : '');
 
@@ -69,7 +74,8 @@
         
          function selectOption() {
             execBlur = true;
-            searchElement.val($('li.current a', resultsElement).attr('rel')).blur();
+            var selected = resultsElement.find('li.current');
+            searchElement.val(currentOptions.formatResult($.data(selected[0], 'ajax-autocomplete'))).blur();
             self.clearAutocomplete();
          };
         
@@ -91,6 +97,23 @@
                 .addClass('current')
                 .end();
          };
+
+         function fillList(term, data) {
+            if (data.length == 0) {
+                return;
+            }
+
+            var totalItems = data.length,
+                resultItem, formatedItem;
+
+            resultsElement.empty();
+            for (var i = 0; i < totalItems; ++i) {
+                formatedItem = currentOptions.formatItem(data[i]);
+                resultItem = $('<li/>').html(self.highlightTerm(formatedItem, term)).appendTo(resultsElement)[0];
+                $.data(resultItem, 'ajax-autocomplete', data[i]);
+            }
+            resultsElement.show();
+         }
         
          function bindEvents() {
             searchElement.keydown(function (ev) {
