@@ -1,7 +1,7 @@
 ;(function ($, un) {
     //$ = jQuery shortcut to avoid library conflict
     //un = undefined to avoid undefined redifinition
-    AjaxAutocomplete = function (context, options) {
+    function AjaxAutocomplete(context, options) {
         var self = this,
             timeOut = null,
             searchElement = null,
