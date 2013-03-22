@@ -57,6 +57,7 @@
          //Private methods
          function autocomplete(inputValue) {
             if (inputValue == '') {
+            	self.clearAutocomplete();
                 return;
             }
         
