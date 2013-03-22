@@ -1,52 +1,52 @@
 ;(function ($, un) {
     //$ = jQuery shortcut to avoid library conflict
     //un = undefined to avoid undefined redifinition
-    ajaxAutocomplete = function (context, options) {
+    AjaxAutocomplete = function (context, options) {
         var self = this,
-        timeOut = null,
-        searchElement = null,
-        resultsElement = null,
-        currentOptions = {},
-        execBlur = true,
-        xhrRequest = null,
-        currentSelect = -1,
-        resultsElementChildren = 0, 
-        defaultOptions = {
-            ajaxURL : '',
-            limit : 10,
-            returnJSON : true,
-            searchDelay : 100,
-            searchElement : '',
-            formatItem : function (data) { return data; }, // Provides advanced markup for an item. For each row of results, this function will be called
-            formatResult : function (data) { return data; }, // Provides the formatting for the value to be put into the input field
-            requestCallback : function (data) {},
-            onSelectionCallback : function (data) {},
-            upDownArrowsCallback : function (key) {},
-            onFocusCallback : function (element) {},
-            onBlurCallback : function (element) {}
-        },
-        keyCodes = {
-            ENTER : 13,
-            ESCAPE : 27,
-            UP : 38,
-            DOWN : 40,
-            LETTERS_NUMBERS_MIN : 48,
-            LETTERS_NUMBERS_MAX : 90,
-            NUM_PAD_MIN : 96,
-            NUM_PAD_MAX : 105,
-            SUBTRACT : 109,
-            FORWARD_SLASH : 191,
-            BACK_SLASH : 220,
-            BACKSPACE : 8,
-            DELETE : 46
-        };
+            timeOut = null,
+            searchElement = null,
+            resultsElement = null,
+            currentOptions = {},
+            execBlur = true,
+            xhrRequest = null,
+            currentSelect = -1,
+            resultsElementChildren = 0, 
+            defaultOptions = {
+                url : '',
+                limit : 10,
+                returnJSON : true,
+                searchDelay : 10,
+                searchElement : '',
+                formatItem : function (data) { return data; }, // Provides advanced markup for an item. For each row of results, this function will be called
+                formatResult : function (data) { return data; }, // Provides the formatting for the value to be put into the input field
+                requestCallback : function (data) {},
+                onSelectionCallback : function (data) {},
+                upDownArrowsCallback : function (key) {},
+                onFocusCallback : function (element) {},
+                onBlurCallback : function (element) {}
+            },
+            keyCodes = {
+                ENTER : 13,
+                ESCAPE : 27,
+                UP : 38,
+                DOWN : 40,
+                LETTERS_NUMBERS_MIN : 48,
+                LETTERS_NUMBERS_MAX : 90,
+                NUM_PAD_MIN : 96,
+                NUM_PAD_MAX : 105,
+                SUBTRACT : 109,
+                FORWARD_SLASH : 191,
+                BACK_SLASH : 220,
+                BACKSPACE : 8,
+                DELETE : 46
+            };
                
          //Public methods
          self.clearAutocomplete = function () {
             clearTimeout(timeOut);
             currentSelect = -1;
             resultsElement.hide();
-         };
+         }
         
          self.highlightTerm = function (value, term) {
         	return value.replace(new RegExp(["(?![^&;]+;)(?!<[^<>]*)(",
@@ -64,57 +64,68 @@
                 xhrRequest.abort();  
             }
             
-            xhrRequest = $.get(currentOptions.ajaxURL, { term : inputValue, limit: currentOptions.limit }, function (data) {
+            xhrRequest = $.get(currentOptions.url, { term : inputValue, limit: currentOptions.limit }, function (data) {
                 fillList(inputValue, data);
+                resultsElementChildren = $('li', resultsElement).length;
                 currentOptions.requestCallback(data);
             }, (currentOptions.returnJSON) ? 'json' : '');
 
             currentSelect = 0;
-         };
+         }
         
          function selectOption() {
             execBlur = true;
-            var selected = resultsElement.find('li.current'), 
-                selectedData = $.data(selected[0], 'ajax-autocomplete');
+            var selected = resultsElement.find('.current'), 
+                selectedData = selected 
+                               ? $.data(selected[0], 'ajax-autocomplete') 
+                               : {};
             searchElement.val(currentOptions.formatResult(selectedData)).blur();
-            onSelectionCallback(selectedData);
+            currentOptions.onSelectionCallback(selectedData);
             self.clearAutocomplete();
-         };
+         }
         
          function optionNavigation(upArrow) {
             upArrow = upArrow || false;
             execBlur = false;
-            resultsElementChildren = $('li', resultsElement).length;
 
             if (upArrow) {
                 currentSelect = (currentSelect == 0) ? resultsElementChildren - 1 : --currentSelect;
             } else {
                 currentSelect = (++currentSelect % resultsElementChildren)
             }
-            
-            resultsElement.find('li.current')
+           
+            resultsElement.find('.current')
                 .removeClass('current')
                 .end()
                 .find('li:eq(' + currentSelect + ')')
                 .addClass('current')
                 .end();
-         };
+         }
+
+         function limitNumberOfItems(dataLength) {
+		    return currentOptions.limit && currentOptions.limit < dataLength
+			    ? currentOptions.limit
+			    : dataLength;
+	     }
 
          function fillList(term, data) {
             if (data.length == 0) {
                 return;
             }
 
-            var totalItems = data.length,
-                resultItem, formatedItem;
+            var totalItems = limitNumberOfItems(data.length),
+                docFragment = document.createDocumentFragment(),
+                listItem, resultItem, formatedItem;
 
             resultsElement.empty();
             for (var i = 0; i < totalItems; ++i) {
                 formatedItem = currentOptions.formatItem(data[i]);
-                resultItem = $('<li/>').html(self.highlightTerm(formatedItem, term)).appendTo(resultsElement)[0];
-                $.data(resultItem, 'ajax-autocomplete', data[i]);
+                listItem = document.createElement('li');
+                listItem.innerHTML = self.highlightTerm(formatedItem, term);
+                docFragment.appendChild(listItem);
+                $.data(listItem, 'ajax-autocomplete', data[i]);
             }
-            resultsElement.show();
+            resultsElement.append(docFragment).show();
          }
         
          function bindEvents() {
@@ -151,34 +162,26 @@
                 }
             });
             
-            //As of jQuery 1.7
-            if ($.isFunction($().on)) {
-                resultsElement.on({
-                    mouseenter : function () {
-                        execBlur = false;
-                    },
-                    mouseleave : function () {
-                        execBlur = true;
-                    }
-                });
-            } else {
-                resultsElement.delegate('div', {
-                    mouseenter : function () {
-                        execBlur = false; 
-                    },
-                    mouseleave : function () {
-                        execBlur = true;  
-                    } 
-                });
-            } 
-         };
+            resultsElement.mouseenter(function () {
+                execBlur = false;
+            }).mouseleave(function () {
+                execBlur = true;
+            }).mouseover(function (ev) {
+                if (ev.target.nodeName && ev.target.nodeName.toUpperCase() == 'LI') {
+                    resultsElement.find('.current').removeClass('current');
+                    $(ev.target).addClass('current');
+                }
+            }).click(function () {
+                selectOption();
+            });
+         }
         
          function init() {
             currentOptions = $.extend({}, defaultOptions, options);
-            searchElement = $(currentOptions.searchElement, context).attr('autocomplete', 'off');
-            resultsElement = $('.ajax-autocomplete-results', context);
+            searchElement = $(context).attr('autocomplete', 'off');
+            resultsElement = $('<ul></ul>', { class : 'ajax-autocomplete-results' }).insertAfter(searchElement);
             bindEvents();
-         };
+         }
         
          //Run initializer
          init();
@@ -186,7 +189,7 @@
     
     $.fn.ajaxAutocomplete = function (options) {   
         return this.each(function () {
-            new ajaxAutocomplete(this, options);
+            new AjaxAutocomplete(this, options);
         });
     };
 })(jQuery, undefined);
