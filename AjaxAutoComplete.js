@@ -70,7 +70,7 @@
                 currentOptions.requestCallback(data);
             }, (currentOptions.returnJSON) ? 'json' : '');
 
-            currentSelect = 0;
+            currentSelect = -1;
          }
         
          function selectOption() {
