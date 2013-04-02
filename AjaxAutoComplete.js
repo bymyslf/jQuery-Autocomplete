@@ -99,7 +99,8 @@
 	     }
 
          function getLocalData(term) {
-            var predicate = currentOptions.lookupPredicate; 
+            var predicate = currentOptions.lookupPredicate;
+            
             return $.grep(currentOptions.source, function (row) {
                 return predicate(row, term);
             });
