@@ -74,7 +74,6 @@
             }
             
             var localData = self.isLocal ? self.getLocalData(value) : self.responseCache[value];
-   
             if (localData) {
                 self.fillSuggestionsList(value, localData);
                 return;
@@ -106,7 +105,7 @@
             this.execBlur = false;
           
             if (upArrow) {
-                this.currentSelect = (currentSelect == 0) ? this.resultsElementChildren - 1 : --this.currentSelect;
+                this.currentSelect = (this.currentSelect == 0) ? this.resultsElementChildren - 1 : --this.currentSelect;
             } else {
                 this.currentSelect = (++this.currentSelect % this.resultsElementChildren)
             }
