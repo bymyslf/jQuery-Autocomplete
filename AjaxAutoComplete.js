@@ -139,7 +139,7 @@
          },
 
          processResponse : function (term, data) {
-            // Cache results if cache is not disabled:
+            // Cache results if cache is not disabled
             if (!this.currentOptions.noCache) {
                 this.responseCache[term] = data;
             }
