@@ -1,6 +1,7 @@
+//Don't remove this semicolon!!!
 ;(function ($, un) {
-    //$ = jQuery shortcut to avoid library conflict
-    //un = undefined to avoid undefined redifinition
+    'use strict';
+    
     function Autocomplete(context, options) {
         var self = this,
             defaultOptions = {
