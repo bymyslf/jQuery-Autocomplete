@@ -28,9 +28,9 @@
          self.searchElement = $(context).attr('autocomplete', 'off');
          self.resultsElement = $('<ul></ul>', { class : 'autocomplete-results' }).insertAfter(self.searchElement);
          self.responseCache = [];
-         self.execBlur = true;
+         self.executeBlur = true;
          self.xhrRequest = null;
-         self.currentSelect = -1;
+         self.currentIndex = -1;
          self.resultsElementChildren = 0;
          
          self.bindEvents();
@@ -59,17 +59,18 @@
     };
 
     Autocomplete.prototype = {
-        clearAutocomplete : function () {
+        clearSuggestions : function () {
             clearTimeout(this.timeOut);
-            this.currentSelect = -1;
+            this.currentIndex = -1;
             this.resultsElement.hide();
          },
          
-         autocomplete : function (value) {
-            var self = this;
+         getSuggestions : function (value) {
+            var self = this, 
+                options = self.currentOptions;
 
-            if (value.length < self.currentOptions.minChars) {
-                self.clearAutocomplete();
+            if (value.length < options.minChars) {
+                self.clearSuggestions();
                 return;
             }
             
@@ -83,37 +84,42 @@
                 self.xhrRequest.abort();  
             }
             
-            self.xhrRequest = $.get(self.currentOptions.source, { term : value, limit: self.currentOptions.limit }, function (data) {
+            self.xhrRequest = $.get(options.source, { term : value, limit: options.limit }, function (data) {
                 self.processResponse(value, data);
-                self.currentOptions.requestCallback(data);
-            }, (self.currentOptions.returnJSON) ? 'json' : '');
+                if ($.isFunction(options.requestCallback)) {
+                    options.requestCallback(data);
+                }
+            }, (options.returnJSON) ? 'json' : '');
          },
          
-         selectOption : function () {
-            this.execBlur = true;
-            var selected = this.resultsElement.find('.current'), 
-                selectedData = selected 
-                               ? $.data(selected[0], 'autocomplete') 
-                               : {};
-            this.searchElement.val(this.currentOptions.formatResult(selectedData)).blur();
-            this.currentOptions.onSelectionCallback(selectedData);
-            this.clearAutocomplete();
+         selectSuggestion : function () {
+            this.executeBlur = true;
+
+            var options = this.currentOptions,
+                selected = this.resultsElement.find('.current'), 
+                selectedData = selected ? $.data(selected[0], 'autocomplete') : {};
+
+            this.searchElement.val(options.formatResult(selectedData)).trigger('blur');
+            if ($.isFunction(options.onSelectionCallback)) {
+                options.onSelectionCallback(selectedData);
+            }
+            this.clearSuggestions();
          },
          
-         optionNavigation : function (upArrow) {
+         suggestionNavigation : function (upArrow) {
             upArrow = upArrow || false;
-            this.execBlur = false;
+            this.executeBlur = false;
           
             if (upArrow) {
-                this.currentSelect = (this.currentSelect == 0) ? this.resultsElementChildren - 1 : --this.currentSelect;
+                this.currentIndex = (this.currentIndex === 0) ? this.resultsElementChildren - 1 : --this.currentIndex;
             } else {
-                this.currentSelect = (++this.currentSelect % this.resultsElementChildren)
+                this.currentIndex = (++this.currentIndex % this.resultsElementChildren)
             }
             
             this.resultsElement.find('.current')
                 .removeClass('current')
                 .end()
-                .find('li:eq(' + this.currentSelect + ')')
+                .find('li:eq(' + this.currentIndex + ')')
                 .addClass('current')
                 .end();
          },
@@ -143,7 +149,7 @@
 
          fillSuggestionsList : function (term, data) {
             if (data.length == 0) {
-                this.clearAutocomplete();
+                this.clearSuggestions();
                 return;
             }
 
@@ -161,11 +167,12 @@
             }
             this.resultsElement.append(docFragment).show();
             this.resultsElementChildren = $('li', this.resultsElement).length;
-            this.currentSelect = -1;
+            this.currentIndex = -1;
          },
         
          bindEvents : function () {
-            var self = this;
+            var self = this, 
+                options = self.currentOptions;
 
             self.searchElement.keydown(function (ev) {
                 var keyCode = ev.keyCode || window.event.keyCode, 
@@ -173,15 +180,17 @@
               
                 switch (keyCode) {
                     case keyCodes.ENTER: //Enter
-                        self.selectOption();
+                        self.selectSuggestion();
                         break;
                     case keyCodes.ESCAPE: //Escape
-                        self.clearAutocomplete(); 
+                        self.clearSuggestions(); 
                         break;
                     case keyCodes.UP: //Up and down arrows
                     case keyCodes.DOWN:
-                        self.optionNavigation.call(self, keyCode == keyCodes.UP ? true : false);
-                        self.currentOptions.upDownArrowsCallback.call(self, keyCode);
+                        self.suggestionNavigation.call(self, keyCode == keyCodes.UP ? true : false);
+                        if ($.isFunction(options.upDownArrowsCallback)) {
+                            options.upDownArrowsCallback(keyCode);
+                        }
                         break;
                 }
             }).keyup(function (ev) {
@@ -195,38 +204,41 @@
                     || keyCode == keyCodes.FORWARD_SLASH || keyCode == keyCodes.BACK_SLASH 
                     || keyCode == keyCodes.BACKSPACE 
                     || keyCode == keyCodes.DELETE) { //Only numbers, letters, hyphen, back slash, forward slash, backspace, delete
-                    if (self.currentOptions.deferRequestBy > 0) {
+                    if (options.deferRequestBy > 0) {
                         self.timeOut = setTimeout(function () {
-                            self.autocomplete(that.val());
-                        }, self.currentOptions.deferRequestBy);
+                            self.getSuggestions(that.val());
+                        }, options.deferRequestBy);
                     } else {
-                        self.autocomplete(that.val());
+                        self.getSuggestions(that.val());
                     }
                 }   
             }).focus(function () {
-                self.clearAutocomplete();
-                self.currentOptions.onFocusCallback.call(self, $(this));
+                self.clearSuggestions();
+                if ($.isFunction(options.onFocusCallback)) {
+                    options.onFocusCallback($(this));
+                }
             }).blur(function () {
-                if (self.execBlur) {
-                    self.clearAutocomplete();
-                    self.currentOptions.onBlurCallback.call(self, $(this));
+                if (self.executeBlur) {
+                    self.clearSuggestions();
+                    if ($.isFunction(options.onBlurCallback)) {
+                        options.onBlurCallback($(this));
+                    }
                 }
             });
             
             self.resultsElement.mouseenter(function () {
-                self.execBlur = false;
+                self.executeBlur = false;
             }).mouseleave(function () {
-                self.execBlur = true;
+                self.executeBlur = true;
             }).mouseover(function (ev) {
                 if (ev.target.nodeName && ev.target.nodeName.toUpperCase() == 'LI') {
                     self.resultsElement.find('.current').removeClass('current');
                     $(ev.target).addClass('current');
                 }
             }).click(function () {
-                self.selectOption();
+                self.selectSuggestion();
             });
          }
-    
     };
     
     $.fn.autocomplete = function (options) {   
