@@ -59,6 +59,10 @@
     };
 
     Autocomplete.prototype = {
+        clearCache : function () {
+            this.responseCache = [];
+        },
+
         clearSuggestions : function () {
             clearTimeout(this.timeOut);
             this.currentIndex = -1;
@@ -125,10 +129,10 @@
          },
          
          limitNumberOfItems : function (dataLength) {
-	    return this.currentOptions.limit && this.currentOptions.limit < dataLength
-		    ? this.currentOptions.limit
-		    : dataLength;
-	 },
+		    return this.currentOptions.limit && this.currentOptions.limit < dataLength
+			    ? this.currentOptions.limit
+			    : dataLength;
+	     },
 
          getLocalData : function (term) {
             var predicate = this.currentOptions.lookupPredicate; 
