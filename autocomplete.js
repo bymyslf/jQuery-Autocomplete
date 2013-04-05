@@ -17,7 +17,7 @@
                 }, 
                 requestCallback : function (data) {},
                 onSelectionCallback : function (data) {},
-                upDownArrowsCallback : function (index, key) {},
+                upDownArrowsCallback : function (index) {},
                 onFocusCallback : function () {},
                 onBlurCallback : function () {}
             };
@@ -128,15 +128,15 @@
                 .end();
 
             if ($.isFunction(this.currentOptions.upDownArrowsCallback)) {
-                this.currentOptions.upDownArrowsCallback(this.currentIndex, keyCode);
+                this.currentOptions.upDownArrowsCallback(this.currentIndex);
             }
          },
          
          limitNumberOfItems : function (dataLength) {
-	    return this.currentOptions.limit && this.currentOptions.limit < dataLength
-		    ? this.currentOptions.limit
-		    : dataLength;
-	 },
+		    return this.currentOptions.limit && this.currentOptions.limit < dataLength
+			    ? this.currentOptions.limit
+			    : dataLength;
+	     },
 
          getLocalData : function (term) {
             var predicate = this.currentOptions.lookupPredicate; 
