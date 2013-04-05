@@ -15,11 +15,11 @@
                 lookupPredicate : function (row, term) { // Provides data filtering for local data
                     return row.toLowerCase().indexOf(term.toLowerCase()) !== -1;
                 }, 
-                requestCallback : function (data) {},
-                onSelectionCallback : function (data) {},
-                onSuggestionNavigationCallback : function (index) {},
-                onFocusCallback : function () {},
-                onBlurCallback : function () {}
+                onRequest : function (data) {},
+                onSuggestionSelection : function (data) {},
+                onSuggestionNavigation : function (index) {},
+                onElementFocusCallback : function () {},
+                onElementBlur : function () {}
             };
 
          self.timeOut = null;
@@ -90,8 +90,8 @@
             
             self.xhrRequest = $.get(options.source, { term : value, limit: options.limit }, function (data) {
                 self.processResponse(value, data);
-                if ($.isFunction(options.requestCallback)) {
-                    options.requestCallback(data);
+                if ($.isFunction(options.onRequest)) {
+                    options.onRequest(data);
                 }
             }, (options.returnJSON) ? 'json' : '');
          },
@@ -104,8 +104,8 @@
                 selectedData = selected ? $.data(selected[0], 'autocomplete') : {};
 
             this.searchElement.val(options.formatResult(selectedData)).trigger('blur');
-            if ($.isFunction(options.onSelectionCallback)) {
-                options.onSelectionCallback(selectedData);
+            if ($.isFunction(options.onSuggestionSelection)) {
+                options.onSuggestionSelection(selectedData);
             }
             this.clearSuggestions();
          },
@@ -127,8 +127,8 @@
                 .addClass('current')
                 .end();
 
-            if ($.isFunction(this.currentOptions.onSuggestionNavigationCallback)) {
-                this.currentOptions.onSuggestionNavigationCallback(this.currentIndex);
+            if ($.isFunction(this.currentOptions.onSuggestionNavigation)) {
+                this.currentOptions.onSuggestionNavigation(this.currentIndex);
             }
          },
          
@@ -219,14 +219,14 @@
                 }   
             }).focus(function () {
                 self.clearSuggestions();
-                if ($.isFunction(options.onFocusCallback)) {
-                    options.onFocusCallback.call(this);
+                if ($.isFunction(options.onElementFocus)) {
+                    options.onElementFocus.call(this);
                 }
             }).blur(function () {
                 if (self.executeBlur) {
                     self.clearSuggestions();
-                    if ($.isFunction(options.onBlurCallback)) {
-                        options.onBlurCallback.call(this);
+                    if ($.isFunction(options.onElementBlur)) {
+                        options.onElementBlur.call(this);
                     }
                 }
             });
