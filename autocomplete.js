@@ -17,7 +17,7 @@
                 }, 
                 requestCallback : function (data) {},
                 onSelectionCallback : function (data) {},
-                upDownArrowsCallback : function (index) {},
+                onSuggestionNavigationCallback : function (index) {},
                 onFocusCallback : function () {},
                 onBlurCallback : function () {}
             };
@@ -110,11 +110,11 @@
             this.clearSuggestions();
          },
          
-         suggestionNavigation : function (upArrow) {
-            upArrow = upArrow || false;
+         suggestionNavigation : function (moveUp) {
+            moveUp = moveUp || false;
             this.executeBlur = false;
           
-            if (upArrow) {
+            if (moveUp) {
                 this.currentIndex = (this.currentIndex === 0) ? this.resultsElementChildren - 1 : --this.currentIndex;
             } else {
                 this.currentIndex = (++this.currentIndex % this.resultsElementChildren)
@@ -127,16 +127,16 @@
                 .addClass('current')
                 .end();
 
-            if ($.isFunction(this.currentOptions.upDownArrowsCallback)) {
-                this.currentOptions.upDownArrowsCallback(this.currentIndex);
+            if ($.isFunction(this.currentOptions.onSuggestionNavigationCallback)) {
+                this.currentOptions.onSuggestionNavigationCallback(this.currentIndex);
             }
          },
          
          limitNumberOfItems : function (dataLength) {
-		    return this.currentOptions.limit && this.currentOptions.limit < dataLength
-			    ? this.currentOptions.limit
-			    : dataLength;
-	     },
+	    return this.currentOptions.limit && this.currentOptions.limit < dataLength
+		    ? this.currentOptions.limit
+		    : dataLength;
+	 },
 
          getLocalData : function (term) {
             var predicate = this.currentOptions.lookupPredicate; 
