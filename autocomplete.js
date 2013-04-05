@@ -17,9 +17,9 @@
                 }, 
                 requestCallback : function (data) {},
                 onSelectionCallback : function (data) {},
-                upDownArrowsCallback : function (key) {},
-                onFocusCallback : function (element) {},
-                onBlurCallback : function (element) {}
+                upDownArrowsCallback : function (index, key) {},
+                onFocusCallback : function () {},
+                onBlurCallback : function () {}
             };
 
          self.timeOut = null;
@@ -126,6 +126,10 @@
                 .find('li:eq(' + this.currentIndex + ')')
                 .addClass('current')
                 .end();
+
+            if ($.isFunction(this.currentOptions.upDownArrowsCallback)) {
+                this.currentOptions.upDownArrowsCallback(this.currentIndex, keyCode);
+            }
          },
          
          limitNumberOfItems : function (dataLength) {
@@ -191,10 +195,7 @@
                         break;
                     case keyCodes.UP: //Up and down arrows
                     case keyCodes.DOWN:
-                        self.suggestionNavigation.call(self, keyCode == keyCodes.UP ? true : false);
-                        if ($.isFunction(options.upDownArrowsCallback)) {
-                            options.upDownArrowsCallback(keyCode);
-                        }
+                        self.suggestionNavigation(keyCode == keyCodes.UP ? true : false);
                         break;
                 }
             }).keyup(function (ev) {
@@ -219,13 +220,13 @@
             }).focus(function () {
                 self.clearSuggestions();
                 if ($.isFunction(options.onFocusCallback)) {
-                    options.onFocusCallback($(this));
+                    options.onFocusCallback.call(this);
                 }
             }).blur(function () {
                 if (self.executeBlur) {
                     self.clearSuggestions();
                     if ($.isFunction(options.onBlurCallback)) {
-                        options.onBlurCallback($(this));
+                        options.onBlurCallback.call(this);
                     }
                 }
             });
