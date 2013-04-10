@@ -4,7 +4,7 @@
     function Autocomplete(context, options) {
         var self = this,
             defaultOptions = {
-                source : '',
+                source : null,
                 limit : 10,
                 minChars : 1,
                 returnJSON : true,
@@ -34,7 +34,7 @@
          self.resultsElementChildren = 0;
          
          self.bindEvents();
-    };
+    }
 
     Autocomplete.highlightTerm = function (value, term) {
         return value.replace(new RegExp(["(?![^&;]+;)(?!<[^<>]*)(",
@@ -73,7 +73,7 @@
             var self = this, 
                 options = self.currentOptions;
 
-            if (value.length < options.minChars) {
+            if (!options.source || value.length < options.minChars) {
                 self.clearSuggestions();
                 return;
             }
